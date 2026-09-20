@@ -1,17 +1,71 @@
-//
-//  CounterTCATests.swift
-//  CounterTCATests
-//
-//  Created by 677131 on 20/9/2569 BE.
-//
-
-import Testing
+import ComposableArchitecture
+import XCTest
 @testable import CounterTCA
 
-struct CounterTCATests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+@MainActor
+final class CounterTests: XCTestCase {
+  func testCounter() async {
+    let store = TestStore(initialState: CounterFeature.State()) {
+      CounterFeature()
     }
 
+    await store.send(.incrementButtonTapped) {
+      $0.count = 1
+    }
+  }
+
+  func testTimer() async throws {
+    let clock = TestClock()
+
+    let store = TestStore(initialState: CounterFeature.State()) {
+      CounterFeature()
+    } withDependencies: {
+      $0.continuousClock = clock
+    }
+
+    await store.send(.toggleTimerButtonTapped) {
+      $0.isTimerOn = true
+    }
+    await clock.advance(by: .seconds(1))
+    await store.receive(.timerTicked) {
+      $0.count = 1
+    }
+    await clock.advance(by: .seconds(1))
+    await store.receive(.timerTicked) {
+      $0.count = 2
+    }
+    await store.send(.toggleTimerButtonTapped) {
+      $0.isTimerOn = false
+    }
+  }
+
+  func testGetFact() async {
+    let store = TestStore(initialState: CounterFeature.State()) {
+      CounterFeature()
+    } withDependencies: {
+      $0.numberFact.fetch = { "\($0) is a great number!" }
+    }
+    await store.send(.getFactButtonTapped) {
+      $0.isLoadingFact = true
+    }
+    await store.receive(.factResponse("0 is a great number!")) {
+      $0.fact = "0 is a great number!"
+      $0.isLoadingFact = false
+    }
+  }
+
+  func testGetFact_Failure() async {
+    let store = TestStore(initialState: CounterFeature.State()) {
+      CounterFeature()
+    } withDependencies: {
+      $0.numberFact.fetch = { _ in
+        struct SomeError: Error {}
+        throw SomeError()
+      }
+    }
+    XCTExpectFailure()
+    await store.send(.getFactButtonTapped) {
+      $0.isLoadingFact = true
+    }
+  }
 }
