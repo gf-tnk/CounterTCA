@@ -5,12 +5,16 @@ struct NumberFactClient {
   var fetch: @Sendable (Int) async throws -> String
 }
 
+private struct NumberFactResponse: Decodable {
+  let text: String
+}
+
 extension NumberFactClient: DependencyKey {
   static let liveValue = Self { number in
     let (data, _) = try await URLSession.shared.data(
-      from: URL(string: "http://www.numbersapi.com/\(number)")!
+      from: URL(string: "http://localhost:8080/\(number)")!
     )
-    return String(decoding: data, as: UTF8.self)
+    return try JSONDecoder().decode(NumberFactResponse.self, from: data).text
   }
 }
 
