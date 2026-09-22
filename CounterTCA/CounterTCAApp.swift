@@ -16,7 +16,7 @@ struct CounterTCAApp: App {
         store: .init(
           initialState: .init(),
           reducer: {
-            CounterFeature()
+            ContentFeature()
           }
         )
       )

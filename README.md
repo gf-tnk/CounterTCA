@@ -10,9 +10,21 @@ A counter demo built with [The Composable Architecture](https://github.com/point
 
 ## Structure
 
-- `CounterFeature` — `@Reducer` holding `State`, `Action`, and the reducer logic in `body`
-- `ContentView` — SwiftUI view driven by `StoreOf<CounterFeature>`
-- `NumberFactClient` — dependency for fetching facts, registered via `DependencyKey`
+`ContentFeature` is the app root — it composes three independent child features via `Scope`,
+each with its own `State`/`Action`/view:
+
+- `CounterFeature` — `count`, `decrementButtonTapped`/`incrementButtonTapped` (`CounterView`)
+- `NumberFactFeature` — `fact`, `isLoadingFact`, `getFactButtonTapped(number:)`/`factResponse`
+  (`NumberFactView`); the current count is passed in as an action parameter, not owned by this
+  feature
+- `TimerFeature` — `isTimerOn`, `toggleTimerButtonTapped`/`tick` (`TimerView`); emits `tick` but
+  doesn't own `count`, so `ContentFeature` listens for `.timer(.tick)` and increments
+  `state.counter.count` itself
+
+`ContentView` scopes `StoreOf<ContentFeature>` into each child store
+(`store.scope(state:action:)`) and hands them to the child views.
+
+`NumberFactClient` — dependency for fetching facts, registered via `DependencyKey`
 
 ## Requirements
 

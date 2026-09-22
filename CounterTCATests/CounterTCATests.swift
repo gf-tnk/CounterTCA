@@ -5,58 +5,58 @@ import XCTest
 @MainActor
 final class CounterTests: XCTestCase {
   func testCounter() async {
-    let store = TestStore(initialState: CounterFeature.State()) {
-      CounterFeature()
+    let store = TestStore(initialState: ContentFeature.State()) {
+      ContentFeature()
     }
 
-    await store.send(.incrementButtonTapped) {
-      $0.count = 1
+    await store.send(.counter(.incrementButtonTapped)) {
+      $0.counter.count = 1
     }
   }
 
   func testTimer() async throws {
     let clock = TestClock()
 
-    let store = TestStore(initialState: CounterFeature.State()) {
-      CounterFeature()
+    let store = TestStore(initialState: ContentFeature.State()) {
+      ContentFeature()
     } withDependencies: {
       $0.continuousClock = clock
     }
 
-    await store.send(.toggleTimerButtonTapped) {
-      $0.isTimerOn = true
+    await store.send(.timer(.toggleTimerButtonTapped)) {
+      $0.timer.isTimerOn = true
     }
     await clock.advance(by: .seconds(1))
-    await store.receive(.timerTicked) {
-      $0.count = 1
+    await store.receive(\.timer.tick) {
+      $0.counter.count = 1
     }
     await clock.advance(by: .seconds(1))
-    await store.receive(.timerTicked) {
-      $0.count = 2
+    await store.receive(\.timer.tick) {
+      $0.counter.count = 2
     }
-    await store.send(.toggleTimerButtonTapped) {
-      $0.isTimerOn = false
+    await store.send(.timer(.toggleTimerButtonTapped)) {
+      $0.timer.isTimerOn = false
     }
   }
 
   func testGetFact() async {
-    let store = TestStore(initialState: CounterFeature.State()) {
-      CounterFeature()
+    let store = TestStore(initialState: ContentFeature.State()) {
+      ContentFeature()
     } withDependencies: {
       $0.numberFact.fetch = { "\($0) is a great number!" }
     }
-    await store.send(.getFactButtonTapped) {
-      $0.isLoadingFact = true
+    await store.send(.fact(.getFactButtonTapped(number: 0))) {
+      $0.fact.isLoadingFact = true
     }
-    await store.receive(.factResponse("0 is a great number!")) {
-      $0.fact = "0 is a great number!"
-      $0.isLoadingFact = false
+    await store.receive(\.fact.factResponse) {
+      $0.fact.fact = "0 is a great number!"
+      $0.fact.isLoadingFact = false
     }
   }
 
   func testGetFact_Failure() async {
-    let store = TestStore(initialState: CounterFeature.State()) {
-      CounterFeature()
+    let store = TestStore(initialState: ContentFeature.State()) {
+      ContentFeature()
     } withDependencies: {
       $0.numberFact.fetch = { _ in
         struct SomeError: Error {}
@@ -64,8 +64,8 @@ final class CounterTests: XCTestCase {
       }
     }
     XCTExpectFailure()
-    await store.send(.getFactButtonTapped) {
-      $0.isLoadingFact = true
+    await store.send(.fact(.getFactButtonTapped(number: 0))) {
+      $0.fact.isLoadingFact = true
     }
   }
 }
