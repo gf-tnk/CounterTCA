@@ -16,6 +16,8 @@ extension NumberFactClient: DependencyKey {
     )
     return try JSONDecoder().decode(NumberFactResponse.self, from: data).text
   }
+  
+  static let mockValue = Self { _ in "This is mock number" }
 }
 
 extension DependencyValues {

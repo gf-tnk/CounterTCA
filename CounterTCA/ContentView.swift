@@ -19,12 +19,16 @@ struct ContentView: View {
 }
 
 #Preview {
-  ContentView(
-    store: Store(
-      initialState: ContentFeature.State()
-    ) {
-      ContentFeature()
-        ._printChanges()
-    }
-  )
+  withDependencies {
+    $0.numberFact = .mockValue
+  } operation: {
+    ContentView(
+      store: Store(
+        initialState: ContentFeature.State()
+      ) {
+        ContentFeature()
+          ._printChanges()
+      }
+    )
+  }
 }
